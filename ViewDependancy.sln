@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CD06BC42-9FAF-421D-88CA-AA1F272414EF}"
 	ProjectSection(SolutionItems) = preProject
 		ParentChild.DGML = ParentChild.DGML
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global

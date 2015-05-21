@@ -1,8 +1,6 @@
 # ViewDependancy
-Interrogates a Dacpac and outputs a DGML file.
+Interrogates a collection of Dacpacs and outputs a DGML file.
 
 Command Line Options:
-Dacpac: Path to dacpac file
+DIR: Path to recursively scan for dacpac files
 DGML: DGML Output File
-Database:  Default Database name
-Schema: Default Schema name 
