@@ -45,14 +45,30 @@ namespace ViewDependancy
 
         public void addNode(String Node, String Type)
         {
+            string[] Groups = Node.Split('.');
+            GraphNode dbGroup = graph.Nodes.GetOrCreate(Groups[0]);
+            dbGroup.Label = Groups[0];
+            dbGroup.IsGroup = true;
+
+            GraphNode schemaGroup = graph.Nodes.GetOrCreate(Groups[0]+"."+Groups[1]);
+            schemaGroup.Label = Groups[0]+"."+Groups[1];
+            schemaGroup.IsGroup = true;
+
+            GraphLink gl = graph.Links.GetOrCreate(Groups[0], Groups[0] + "." + Groups[1], "", GraphCommonSchema.Contains);
+            
             GraphPropertyCollection properties = graph.DocumentSchema.Properties;
             GraphProperty background = properties.AddNewProperty("Background", typeof(Brush));
+            GraphProperty objecttype = properties.AddNewProperty("ObjectType", typeof(String));
 
 
             GraphNode nodeSource = graph.Nodes.GetOrCreate(Node);
             nodeSource.Label = Node;
 
             nodeSource[background] = getBrushForType(Type);
+            nodeSource[objecttype] = Type;
+
+            GraphLink gl2 = graph.Links.GetOrCreate(Groups[0] + "." + Groups[1], Node,"", GraphCommonSchema.Contains);
+            
 
         }
         public void addNodesAndLink(String Source, String Target)
@@ -392,7 +408,7 @@ namespace ViewDependancy
             }
         }
 
-        public void Prc(string DacPac,string DGMLOut,string DatabaseName,string SchemaName)
+        public void Prc(string DacPac,string DatabaseName,string SchemaName)
         {
             this.databaseName = DatabaseName;
             this.schemaName = SchemaName;
@@ -420,6 +436,8 @@ namespace ViewDependancy
                     int g = 0;
                 }
             }
+        }
+        public void WriteDGML(string DGMLOut){
             graph.Save(DGMLOut);
 
 
@@ -432,45 +450,45 @@ namespace ViewDependancy
          static void Main(string[] args)
         {
 
-            string DacPac = "";
             string DGML = "";
 
             string DatabaseName= "";
-            string SchemaName = "";
-
+            string SchemaName = "dbo";
+            string Dir = Directory.GetCurrentDirectory();
             foreach (var arg in args)
             {
-                if (arg.Substring(0, 7).Equals("Dacpac:", StringComparison.OrdinalIgnoreCase))
-                {
-                    DacPac = arg.Substring(7);
-                }
-                if (arg.Substring(0, 9).Equals("database:", StringComparison.OrdinalIgnoreCase))
-                {
-                    DatabaseName = arg.Substring(9);
-                }
                 if (arg.Substring(0, 5).Equals("DGML:", StringComparison.OrdinalIgnoreCase))
                 {
                     DGML = arg.Substring(5);
                 }
-                if (arg.Substring(0, 7).Equals("Schema:", StringComparison.OrdinalIgnoreCase))
+                if (arg.Substring(0, 5).Equals("DIR:", StringComparison.OrdinalIgnoreCase))
                 {
-                    SchemaName = arg.Substring(7);
+                    Dir = arg.Substring(4);
                 }
+           
             }
             try
             {
                 
-                if (DacPac == "" || DGML == "" || DatabaseName == "" || SchemaName == "")
+                if (DGML == "")
                 {
-                    Console.WriteLine("Options Dacpac:<Dacpac> DGML:<OutputFile> Database:<DefaultDbName> Schema:<DefaultSchemaName>");
+                    Console.WriteLine("Options DGML:<OutputFile> DIR:<Directory>");
                     return;
                 }
                 var Dependancy = new ViewDependancy.VwGraph();
-                Dependancy.Prc(DacPac, DGML,DatabaseName,SchemaName);
+
+                foreach (var file in System.IO.Directory.EnumerateFiles(Dir, "*.dacpac", SearchOption.AllDirectories))
+                {
+                    DatabaseName = Path.GetFileNameWithoutExtension(file);
+
+                    Dependancy.Prc(file, DatabaseName, SchemaName);
+                }
+                Dependancy.WriteDGML(DGML);
             }
+
             catch
             {
-                Console.WriteLine("Options Dacpac:<Dacpac> DGML:<OutputFile> Database:<DefaultDbName> Schema:<DefaultSchemaName>");
+                Console.WriteLine("Options DGML:<OutputFile> DIR:<Directory>");
                 return;
             }
 
