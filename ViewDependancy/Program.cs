@@ -46,28 +46,30 @@ namespace ViewDependancy
         public void addNode(String Node, String Type)
         {
             string[] Groups = Node.Split('.');
-            GraphNode dbGroup = graph.Nodes.GetOrCreate(Groups[0]);
+            GraphNode dbGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper());
             dbGroup.Label = Groups[0];
             dbGroup.IsGroup = true;
 
-            GraphNode schemaGroup = graph.Nodes.GetOrCreate(Groups[0]+"."+Groups[1]);
+            GraphNode schemaGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper()+"."+Groups[1].ToUpper());
             schemaGroup.Label = Groups[0]+"."+Groups[1];
             schemaGroup.IsGroup = true;
 
-            GraphLink gl = graph.Links.GetOrCreate(Groups[0], Groups[0] + "." + Groups[1], "", GraphCommonSchema.Contains);
+            GraphLink gl = graph.Links.GetOrCreate(dbGroup, schemaGroup, "", GraphCommonSchema.Contains);
             
             GraphPropertyCollection properties = graph.DocumentSchema.Properties;
             GraphProperty background = properties.AddNewProperty("Background", typeof(Brush));
             GraphProperty objecttype = properties.AddNewProperty("ObjectType", typeof(String));
 
 
-            GraphNode nodeSource = graph.Nodes.GetOrCreate(Node);
+            GraphNode nodeSource = graph.Nodes.GetOrCreate(Node.ToUpper());
             nodeSource.Label = Node;
 
-            nodeSource[background] = getBrushForType(Type);
-            nodeSource[objecttype] = Type;
-
-            GraphLink gl2 = graph.Links.GetOrCreate(Groups[0] + "." + Groups[1], Node,"", GraphCommonSchema.Contains);
+            if (Type != "")
+            {
+                nodeSource[background] = getBrushForType(Type);
+                nodeSource[objecttype] = Type;
+            }
+            GraphLink gl2 = graph.Links.GetOrCreate(schemaGroup, nodeSource,"", GraphCommonSchema.Contains);
             
 
         }
@@ -75,11 +77,17 @@ namespace ViewDependancy
         {
 
             if (CurrentType == "") return;
-          
-            GraphNode nodeSource = graph.Nodes.GetOrCreate(Source);
+
+            Source = Source.Replace("$(", "");
+            Source = Source.Replace(")", "");
+
+            Target = Target.Replace("$(", "");
+            Target = Target.Replace(")", "");
+
+            GraphNode nodeSource = graph.Nodes.GetOrCreate(Source.ToUpper());
             nodeSource.Label = Source;
 
-            GraphNode nodeTarget = graph.Nodes.GetOrCreate(Target);
+            GraphNode nodeTarget = graph.Nodes.GetOrCreate(Target.ToUpper());
             nodeTarget.Label = Target;
 
             graph.Links.GetOrCreate(nodeSource, nodeTarget);
@@ -416,7 +424,7 @@ namespace ViewDependancy
             using (TSqlModel model = TSqlModel.LoadFromDacpac(DacPac,
                new ModelLoadOptions(DacSchemaModelStorageType.Memory, loadAsScriptBackedModel: true)))
             {
-
+                
                 ModelTypeClass[] Filter = new[]{
                     ModelSchema.View,
                     ModelSchema.Procedure,
@@ -461,7 +469,7 @@ namespace ViewDependancy
                 {
                     DGML = arg.Substring(5);
                 }
-                if (arg.Substring(0, 5).Equals("DIR:", StringComparison.OrdinalIgnoreCase))
+                if (arg.Substring(0, 4).Equals("DIR:", StringComparison.OrdinalIgnoreCase))
                 {
                     Dir = arg.Substring(4);
                 }
@@ -480,7 +488,7 @@ namespace ViewDependancy
                 foreach (var file in System.IO.Directory.EnumerateFiles(Dir, "*.dacpac", SearchOption.AllDirectories))
                 {
                     DatabaseName = Path.GetFileNameWithoutExtension(file);
-
+                    Console.WriteLine("Processing {0}", file);
                     Dependancy.Prc(file, DatabaseName, SchemaName);
                 }
                 Dependancy.WriteDGML(DGML);

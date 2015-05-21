@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="CHILD" Group="Expanded" Label="Child" />
+    <Node Id="CHILD.DBO" Group="Expanded" Label="Child.dbo" />
+    <Node Id="CHILD.DBO.CHILD" Background="#FF008080" Label="Child.dbo.Child" ObjectType="View" />
+    <Node Id="PARENT" Group="Expanded" Label="Parent" />
+    <Node Id="PARENT.DBO" Group="Expanded" Label="Parent.dbo" />
+    <Node Id="PARENT.DBO.PARENT" Background="#FF26F20C" Label="Parent.dbo.Parent" ObjectType="Table" />
+  </Nodes>
+  <Links>
+    <Link Source="CHILD" Target="CHILD.DBO" Category="Contains" />
+    <Link Source="CHILD.DBO" Target="CHILD.DBO.CHILD" Category="Contains" />
+    <Link Source="PARENT" Target="PARENT.DBO" Category="Contains" />
+    <Link Source="PARENT.DBO" Target="PARENT.DBO.PARENT" Category="Contains" />
+    <Link Source="PARENT.DBO.PARENT" Target="CHILD.DBO.CHILD" />
+  </Links>
+  <Categories>
+    <Category Id="Contains" Label="Contains" Description="Whether the source of the link contains the target object" IsContainment="True" />
+  </Categories>
+  <Properties>
+    <Property Id="Background" DataType="System.Windows.Media.Brush" />
+    <Property Id="Group" Label="Group" Description="Display the node as a group" DataType="Microsoft.VisualStudio.GraphModel.GraphGroupStyle" />
+    <Property Id="IsContainment" DataType="System.Boolean" />
+    <Property Id="Label" Label="Label" Description="Displayable label of an Annotatable object" DataType="System.String" />
+    <Property Id="ObjectType" DataType="System.String" />
+  </Properties>
+</DirectedGraph>
