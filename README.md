@@ -22,3 +22,5 @@ Example of XML
   <Depends Source="CSVFeeds.FeedB" SourceType="CSV" Target="Child.dbo.Child"/>
 </Deps>
  ```
+
+![Example](http://dataidol.com/davebally/wp-content/uploads/sites/3/2015/06/dep.jpg)
