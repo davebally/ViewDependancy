@@ -15,5 +15,10 @@ DIR: Path to recursively scan for dacpac files
 DGML: DGML Output File  
 XML: Optional path to XML file for adding manual dependencies
 
-
- 
+Example of XML
+```
+<Deps>
+ <Depends Source="CSVFeeds.FeedA" SourceType="CSV" Target="Parent.dbo.parent"/>
+  <Depends Source="CSVFeeds.FeedB" SourceType="CSV" Target="Child.dbo.Child"/>
+</Deps>
+ ```
