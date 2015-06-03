@@ -15,6 +15,9 @@ using System.IO;
 using Microsoft.VisualStudio.GraphModel;
 using System.Windows.Media;
 
+using System.Xml;
+using System.Xml.Linq;
+
 namespace ViewDependancy
 {
     class VwGraph
@@ -38,24 +41,80 @@ namespace ViewDependancy
                     return (new SolidColorBrush(Color.FromArgb(0xFF, 12, 231, 242)));
                 case "Table":
                     return (new SolidColorBrush(Color.FromArgb(0xFF, 38, 242, 12)));
+                case "CSV":
+                    return (new SolidColorBrush(Color.FromArgb(0xFF, 240, 24, 67)));
 
             } 
             return null;
         }
 
-        public void addNode(String Node, String Type)
+        public GraphNode GraphNodeRecurs(GraphNode prt,string[] Nodes,int i){
+            String FullPath="";
+            for (int x = 0; x <= i; x++)
+            {
+                if (x != 0) FullPath += ".";
+                FullPath += Nodes[x];
+            }
+            GraphNode node = null;
+            node = graph.Nodes.GetOrCreate(FullPath.ToUpper());
+            node.Label = FullPath;
+            if (prt != null)
+            {
+                GraphLink gl2 = graph.Links.GetOrCreate(prt, node, "", GraphCommonSchema.Contains);
+            }
+            if (i == (Nodes.Length - 1))
+            {
+                return (node);
+
+            }else
+            {
+                node.IsGroup = true;
+                
+                return (GraphNodeRecurs(node, Nodes, ++i));
+
+            }
+            
+        }
+        public GraphNode addNodeNesting(String Node, String Type)
+        {
+
+            string[] Groups = Node.Split('.');
+            
+            var newNode = GraphNodeRecurs(null,Groups,0);
+            if (Type != "")
+            {
+                GraphPropertyCollection properties = graph.DocumentSchema.Properties;
+                GraphProperty background = properties.AddNewProperty("Background", typeof(Brush));
+                GraphProperty objecttype = properties.AddNewProperty("ObjectType", typeof(String));
+
+                newNode[background] = getBrushForType(Type);
+                newNode[objecttype] = Type;
+            }
+            return (newNode);            
+        }
+
+        public GraphNode addNode(String Node, String Type)
         {
             string[] Groups = Node.Split('.');
-            GraphNode dbGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper());
-            dbGroup.Label = Groups[0];
-            dbGroup.IsGroup = true;
+        
+            GraphNode dbGroup = null;
+            if (Groups.Length == 3)
+            {
+                dbGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper());
+                dbGroup.Label = Groups[0];
+                dbGroup.IsGroup = true;
+            }
 
-            GraphNode schemaGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper()+"."+Groups[1].ToUpper());
-            schemaGroup.Label = Groups[0]+"."+Groups[1];
-            schemaGroup.IsGroup = true;
 
-            GraphLink gl = graph.Links.GetOrCreate(dbGroup, schemaGroup, "", GraphCommonSchema.Contains);
-            
+            GraphNode schemaGroup=null;
+            if(Groups.Length>=2){
+                schemaGroup = graph.Nodes.GetOrCreate(Groups[0].ToUpper()+"."+Groups[1].ToUpper());
+                schemaGroup.Label = Groups[0]+"."+Groups[1];
+                schemaGroup.IsGroup = true;
+                if(dbGroup!=null){
+                    GraphLink gl = graph.Links.GetOrCreate(dbGroup, schemaGroup, "", GraphCommonSchema.Contains);
+                }
+            }
             GraphPropertyCollection properties = graph.DocumentSchema.Properties;
             GraphProperty background = properties.AddNewProperty("Background", typeof(Brush));
             GraphProperty objecttype = properties.AddNewProperty("ObjectType", typeof(String));
@@ -69,8 +128,22 @@ namespace ViewDependancy
                 nodeSource[background] = getBrushForType(Type);
                 nodeSource[objecttype] = Type;
             }
-            GraphLink gl2 = graph.Links.GetOrCreate(schemaGroup, nodeSource,"", GraphCommonSchema.Contains);
-            
+            if (schemaGroup != null)
+            {
+                GraphLink gl2 = graph.Links.GetOrCreate(schemaGroup, nodeSource, "", GraphCommonSchema.Contains);
+            }
+
+            return nodeSource;
+        }
+       
+
+        public void addNodesAndLinkFromXML(String Source,String SourceType,String Target, String TargetType)
+        {
+            var nodeSource = addNodeNesting(Source, SourceType);
+            var nodeTarget = addNodeNesting(Target, TargetType);
+            graph.Links.GetOrCreate(nodeSource, nodeTarget);
+
+            addNodesAndLink(Source,Target);
 
         }
         public void addNodesAndLink(String Source, String Target)
@@ -93,6 +166,7 @@ namespace ViewDependancy
             graph.Links.GetOrCreate(nodeSource, nodeTarget);
 
         }
+
         public void addSourcetoCurrentObject(String Source)
         {
             addNodesAndLink(Source, CurrentObject);
@@ -462,6 +536,7 @@ namespace ViewDependancy
 
             string DatabaseName= "";
             string SchemaName = "dbo";
+            string XMLFile = "";
             string Dir = Directory.GetCurrentDirectory();
             foreach (var arg in args)
             {
@@ -472,6 +547,10 @@ namespace ViewDependancy
                 if (arg.Substring(0, 4).Equals("DIR:", StringComparison.OrdinalIgnoreCase))
                 {
                     Dir = arg.Substring(4);
+                }
+                if (arg.Substring(0, 4).Equals("XML:", StringComparison.OrdinalIgnoreCase))
+                {
+                    XMLFile = arg.Substring(4);
                 }
            
             }
@@ -490,6 +569,26 @@ namespace ViewDependancy
                     DatabaseName = Path.GetFileNameWithoutExtension(file);
                     Console.WriteLine("Processing {0}", file);
                     Dependancy.Prc(file, DatabaseName, SchemaName);
+                }
+
+
+                XDocument coordinates = XDocument.Load(XMLFile);
+
+                foreach (var coordinate in coordinates.Descendants("Depends"))
+                {
+                    string Source = coordinate.Attribute("Source").Value;
+                    string SourceType = "";
+                    var src = coordinate.Attribute("SourceType");
+                    if(src!=null)SourceType = src.Value;
+
+                    string Target = coordinate.Attribute("Target").Value;
+                    string TargetType="";
+                    var tgt = coordinate.Attribute("TargetType");
+                    if(tgt!=null)
+                        TargetType = tgt.Value;
+
+                    Dependancy.addNodesAndLinkFromXML(Source, SourceType, Target, TargetType);
+                  
                 }
                 Dependancy.WriteDGML(DGML);
             }

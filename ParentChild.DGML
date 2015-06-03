@@ -4,13 +4,20 @@
     <Node Id="CHILD" Group="Expanded" Label="Child" />
     <Node Id="CHILD.DBO" Group="Expanded" Label="Child.dbo" />
     <Node Id="CHILD.DBO.CHILD" Background="#FF008080" Label="Child.dbo.Child" ObjectType="View" />
+    <Node Id="CSVFEEDS" Group="Expanded" Label="CSVFeeds" />
+    <Node Id="CSVFEEDS.FEEDA" Background="#FFF01843" Label="CSVFeeds.FeedA" ObjectType="CSV" />
+    <Node Id="CSVFEEDS.FEEDB" Background="#FFF01843" Label="CSVFeeds.FeedB" ObjectType="CSV" />
     <Node Id="PARENT" Group="Expanded" Label="Parent" />
     <Node Id="PARENT.DBO" Group="Expanded" Label="Parent.dbo" />
-    <Node Id="PARENT.DBO.PARENT" Background="#FF26F20C" Label="Parent.dbo.Parent" ObjectType="Table" />
+    <Node Id="PARENT.DBO.PARENT" Background="#FF26F20C" Label="Parent.dbo.parent" ObjectType="Table" />
   </Nodes>
   <Links>
     <Link Source="CHILD" Target="CHILD.DBO" Category="Contains" />
     <Link Source="CHILD.DBO" Target="CHILD.DBO.CHILD" Category="Contains" />
+    <Link Source="CSVFEEDS" Target="CSVFEEDS.FEEDA" Category="Contains" />
+    <Link Source="CSVFEEDS" Target="CSVFEEDS.FEEDB" Category="Contains" />
+    <Link Source="CSVFEEDS.FEEDA" Target="PARENT.DBO.PARENT" />
+    <Link Source="CSVFEEDS.FEEDB" Target="CHILD.DBO.CHILD" />
     <Link Source="PARENT" Target="PARENT.DBO" Category="Contains" />
     <Link Source="PARENT.DBO" Target="PARENT.DBO.PARENT" Category="Contains" />
     <Link Source="PARENT.DBO.PARENT" Target="CHILD.DBO.CHILD" />
